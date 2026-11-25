@@ -1,0 +1,14 @@
+{
+  "name": "kaoyan-ai-planner",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@12.5.1",
+  "scripts": {
+    "build": "pnpm --filter @kaoyan/mcp-core build && pnpm --filter @kaoyan/mcp-stdio build && pnpm --filter @kaoyan/mcp-http build",
+    "typecheck": "pnpm --filter @kaoyan/mcp-core build && pnpm --filter @kaoyan/mcp-stdio typecheck && pnpm --filter @kaoyan/mcp-http typecheck",
+    "test": "pnpm --filter @kaoyan/mcp-core test && pnpm --filter @kaoyan/mcp-http test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

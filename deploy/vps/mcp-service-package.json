@@ -1,0 +1,13 @@
+{
+  "name": "kaoyan-mcp-http-deployment",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@hono/node-server": "^1.19.1",
+    "@kaoyan/mcp-core": "file:./kaoyan-mcp-core-0.1.0.tgz",
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "@supabase/supabase-js": "^2.57.0",
+    "dotenv": "^16.6.1",
+    "hono": "^4.9.7"
+  }
+}

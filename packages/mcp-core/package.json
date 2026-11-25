@@ -1,0 +1,22 @@
+{
+  "name": "@kaoyan/mcp-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm build && node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.0",
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.2"
+  }
+}

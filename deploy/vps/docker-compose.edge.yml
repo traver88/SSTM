@@ -1,0 +1,26 @@
+services:
+  mcp-http:
+    container_name: kaoyan-mcp-http
+    build:
+      context: ./mcp-http
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8787"
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      MCP_READ_LIMIT_PER_MINUTE: "60"
+      MCP_WRITE_LIMIT_PER_MINUTE: "20"
+      MCP_SESSION_IDLE_TIMEOUT_MS: "3600000"
+      MCP_MAX_SESSIONS: "500"
+    ports:
+      - "127.0.0.1:8787:8787/tcp"
+    depends_on:
+      kong:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/healthz').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+

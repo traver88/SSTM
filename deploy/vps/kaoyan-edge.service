@@ -1,0 +1,22 @@
+[Unit]
+Description=研途智排 HTTPS reverse proxy
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Environment=EDGE_PORT=8443
+Environment=TLS_CERT_FILE=/etc/letsencrypt/live/yantu-iizjj/fullchain.pem
+Environment=TLS_KEY_FILE=/etc/letsencrypt/live/yantu-iizjj/privkey.pem
+ExecStart=/usr/local/bin/node /opt/kaoyan-ai-planner/edge-proxy.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
