@@ -403,6 +403,12 @@ private fun MonthPage(
     val examDate = remember(viewModel.examDate()) { runCatching { LocalDate.parse(viewModel.examDate()) }.getOrNull() }
     val daysLeft = examDate?.let { ChronoUnit.DAYS.between(LocalDate.now(), it).coerceAtLeast(0) }
     val dateFormat = DateTimeFormatter.ofPattern("M月d日")
+    val phases by viewModel.phases.collectAsState(initial = emptyList())
+    val phaseLabel = remember(phases) {
+        val today = LocalDate.now().toString()
+        val active = phases.filter { it.deletedAt == null && it.startDate <= today && it.endDate >= today }
+        (active.firstOrNull() ?: phases.firstOrNull { it.deletedAt == null && it.startDate > today })?.name
+    }
 
     Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars)) {
         TopAppBar(
@@ -418,7 +424,7 @@ private fun MonthPage(
             Spacer(Modifier.width(8.dp))
             Text("·", color = MutedInk)
             TextButton(onClick = onRoadmap, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp)) {
-                Text("强化阶段", style = MaterialTheme.typography.bodySmall, color = Accent)
+                Text(phaseLabel ?: "全程规划", style = MaterialTheme.typography.bodySmall, color = Accent)
             }
         }
         if (wide) {
@@ -832,6 +838,9 @@ private fun AddTaskDialog(
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Text("${date.monthValue}月${date.dayOfMonth}日", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                 ChoiceMenu(selectedSubject?.name ?: "选择科目", subjects.map { it.name }, onSelect = { name -> selectedSubject = subjects.firstOrNull { it.name == name } })
+                if (subjects.isEmpty()) {
+                    Text("尚无科目。请先在电脑端通过 AI 建立档案和科目后使用。", color = Accent, style = MaterialTheme.typography.bodySmall)
+                }
                 OutlinedTextField(title, { title = it }, label = { Text("任务内容") }, singleLine = true)
                 ChoiceMenu(activity, listOf("听课", "刷题", "复盘"), onSelect = { activity = it })
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -840,7 +849,7 @@ private fun AddTaskDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { val subject = selectedSubject; val duration = minutes.toIntOrNull() ?: 60; if (subject != null && title.isNotBlank() && duration in 5..480) onSave(subject, title.trim(), activity, duration, time) }) { Text("保存") } },
+        confirmButton = { TextButton(enabled = selectedSubject != null && title.isNotBlank() && minutes.toIntOrNull()?.let { it in 5..480 } == true, onClick = { val subject = selectedSubject; val duration = minutes.toIntOrNull() ?: 60; if (subject != null && title.isNotBlank() && duration in 5..480) onSave(subject, title.trim(), activity, duration, time) }) { Text("保存") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
     )
 }
@@ -867,6 +876,9 @@ private fun FreeTimerDialog(
                     TextButton(onClick = { manual = true }) { Text("补记") }
                 }
                 ChoiceMenu(selected?.name ?: "选择科目", subjects.map { it.name }, onSelect = { name -> selected = subjects.firstOrNull { it.name == name } })
+                if (subjects.isEmpty()) {
+                    Text("尚无科目。请先在电脑端通过 AI 建立档案和科目后使用。", color = Accent, style = MaterialTheme.typography.bodySmall)
+                }
                 ChoiceMenu(activity, listOf("听课", "刷题", "复盘"), onSelect = { activity = it })
                 if (!manual) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -887,7 +899,7 @@ private fun FreeTimerDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { selected?.let { if (manual) onManualLog(it, activity, minutes, note) else onStart(it, activity, minutes) } }) { Text(if (manual) "记下" else "开始") } },
+        confirmButton = { TextButton(enabled = selected != null, onClick = { selected?.let { if (manual) onManualLog(it, activity, minutes, note) else onStart(it, activity, minutes) } }) { Text(if (manual) "记下" else "开始") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
     )
 }
@@ -922,7 +934,10 @@ private fun TimerDialog(timer: TimerSnapshot, viewModel: PlannerViewModel, onDis
                 Spacer(Modifier.height(7.dp))
                 Text(timer.taskTitle, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(42.dp))
-                Text(formatClock(if (timer.lastPausedAtEpochMs != null) elapsed else elapsed), fontSize = 62.sp, fontWeight = FontWeight.Light, color = Ink)
+                Text(formatClock(elapsed), fontSize = 62.sp, fontWeight = FontWeight.Light, color = Ink)
+                if (timer.lastPausedAtEpochMs != null) {
+                    Text("已暂停", color = Accent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                }
                 Text("${timer.activityType} · 目标 ${timer.targetDurationSec / 60} 分钟", color = MutedInk)
                 if (remaining == 0L) {
                     Spacer(Modifier.height(16.dp))

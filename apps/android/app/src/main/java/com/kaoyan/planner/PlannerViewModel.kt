@@ -116,14 +116,19 @@ class PlannerViewModel(application: Application) : AndroidViewModel(application)
         if (_syncing.value) return
         viewModelScope.launch {
             _syncing.value = true
-            _onlineReady.value = false
+            // 不提前清 onlineReady：已在线用户的日常同步在后台进行，不切回门禁页。
+            val wasOnline = _onlineReady.value
             try {
                 _syncStatus.value = syncRepository.sync()
                 ReminderScheduler.rescheduleAfterDataSync(getApplication())
                 _signedIn.value = true
                 _onlineReady.value = true
             } catch (error: Throwable) {
-                _onlineReady.value = false
+                // 首次进入（未在线）或会话失效时回门禁页；其余失败保留缓存数据继续使用。
+                if (!wasOnline || error.message?.contains("登录状态已失效") == true) {
+                    _signedIn.value = syncRepository.hasSession()
+                    _onlineReady.value = false
+                }
                 _syncStatus.value = error.message ?: "同步失败"
             } finally {
                 _syncing.value = false
