@@ -659,7 +659,7 @@ private fun SettingsPage(viewModel: PlannerViewModel) {
     var revisionToRevert by remember { mutableStateOf<PlanRevisionEntity?>(null) }
     var revokeApiKeyConfirmation by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
-    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp).windowInsetsPadding(WindowInsets.navigationBars)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).windowInsetsPadding(WindowInsets.navigationBars)) {
         TopAppBar(title = { Text("设置", fontWeight = FontWeight.SemiBold) }, colors = TopAppBarDefaults.topAppBarColors(containerColor = WarmBackground))
         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
