@@ -128,7 +128,7 @@ export function registerTools(server: McpServer, supabase: SupabaseClient, userI
     })) };
   });
 
-  register("upsert_monthly_blueprint", "Create or update a 30-day monthly plan blueprint.", async (input) => {
+  register("upsert_monthly_blueprint", "Create or update a 30-day monthly plan blueprint. Optional renew_remind_before_days (0-30, default 3) sets how many days before the plan ends a renewal reminder fires.", async (input) => {
     const quotas: Record<string, number> = {};
     for (const [key, hours] of Object.entries(input.subject_hour_quotas as Record<string, number>)) {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key);
@@ -140,6 +140,7 @@ export function registerTools(server: McpServer, supabase: SupabaseClient, userI
       p_phase_id: input.phase_id ?? null, p_blueprint: {
         title: input.title, start_date: input.start_date, end_date: input.end_date, subject_hour_quotas: quotas,
         weekly_milestones: input.weekly_milestones, strategy_note: input.strategy_note,
+        ...(input.renew_remind_before_days !== undefined ? { renew_remind_before_days: input.renew_remind_before_days } : {}),
       },
       p_reason: input.reason, p_dry_run: input.dry_run,
     });

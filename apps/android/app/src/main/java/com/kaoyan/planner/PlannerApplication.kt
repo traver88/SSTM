@@ -32,6 +32,12 @@ class PlannerApplication : Application() {
                     NotificationManager.IMPORTANCE_DEFAULT,
                 ).apply { description = "月度计划到期续期提醒" },
             )
+            val syncChannel = NotificationChannel(
+                CHANNEL_SYNC,
+                "同步状态",
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply { description = "云端同步失败时提醒你打开应用重试" }
+            getSystemService(NotificationManager::class.java).createNotificationChannel(syncChannel)
             getSystemService(NotificationManager::class.java).createNotificationChannels(reminderChannels)
         }
     }
@@ -41,5 +47,6 @@ class PlannerApplication : Application() {
         const val CHANNEL_PHASE = "channel_phase_milestone"
         const val CHANNEL_DAILY = "channel_daily_execution"
         const val CHANNEL_MONTHLY = "channel_monthly_renew"
+        const val CHANNEL_SYNC = "channel_sync_status"
     }
 }

@@ -69,6 +69,7 @@ export const schemas = {
     monthly_plan_id: uuid.optional(), phase_id: uuid.optional(), title: z.string().trim().min(1), start_date: isoDate, end_date: isoDate,
     reason: z.string().trim().min(1).default("AI 更新月度计划骨架"), dry_run: z.boolean().default(false),
     subject_hour_quotas: z.record(z.number().nonnegative()), weekly_milestones: z.array(z.unknown()).default([]), strategy_note: z.string().optional(),
+    renew_remind_before_days: z.number().int().min(0).max(30).optional(),
   }).refine((value) => value.end_date >= value.start_date, { message: "结束日期不能早于开始日期" })
     .refine((value) => dateSpanDays(value.start_date, value.end_date) <= 35, { message: "月计划最多 35 天" }),
   batch_upsert_plan_range: z.object({

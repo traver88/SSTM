@@ -50,6 +50,8 @@ class SyncRepository(context: Context, private val dao: PlannerDao) {
 
     suspend fun signOut() {
         api.signOut()
+        // 登出后清掉账号相关的 API Key 吊销句柄，避免换账号后误用
+        preferences.edit().remove(KEY_API_KEY_ID).apply()
     }
 
     suspend fun revertRevision(revisionId: String, cascadeNewer: Boolean = false): String = withContext(Dispatchers.IO) {

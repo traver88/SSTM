@@ -1,9 +1,13 @@
 package com.kaoyan.planner
 
+import android.Manifest
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaoyan.planner.data.ExamPhaseEntity
@@ -130,6 +134,8 @@ class PlannerViewModel(application: Application) : AndroidViewModel(application)
                     _onlineReady.value = false
                 }
                 _syncStatus.value = error.message ?: "同步失败"
+                // 后台同步失败时发系统通知，避免用户无感知地长时间用旧数据
+                if (wasOnline) notifySyncFailure(_syncStatus.value ?: "同步失败")
             } finally {
                 _syncing.value = false
             }
@@ -198,12 +204,35 @@ class PlannerViewModel(application: Application) : AndroidViewModel(application)
             _syncStatus.value = "请先结束当前计时，再退出登录。"
             return
         }
+        if (_syncing.value) {
+            _syncStatus.value = "正在同步云端数据，请等待同步结束后再退出登录。"
+            return
+        }
         viewModelScope.launch {
             syncRepository.signOut()
             ReminderScheduler.cancelAll(getApplication())
             _signedIn.value = false
             _onlineReady.value = false
             _syncStatus.value = "已退出登录，本机缓存仍保留"
+        }
+    }
+
+    /** 后台同步失败时的系统通知。固定通知 ID，重复失败只更新不堆叠。 */
+    private fun notifySyncFailure(message: String) {
+        val context = getApplication<Application>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) return
+        val notification = NotificationCompat.Builder(context, PlannerApplication.CHANNEL_SYNC)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("云端同步失败")
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).apply {
+            runCatching { notify(NOTIFICATION_ID_SYNC_FAILURE, notification) }
         }
     }
 
@@ -449,5 +478,6 @@ class PlannerViewModel(application: Application) : AndroidViewModel(application)
         private const val KEY_TIMER = "active_timer"
         private const val KEY_EXAM_DATE = "exam_date"
         private const val TIMER_REQUEST_CODE = 4431
+        private const val NOTIFICATION_ID_SYNC_FAILURE = 9001
     }
 }
