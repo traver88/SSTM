@@ -51,5 +51,5 @@ Android 工程位于 `apps/android`。客户端包含 Compose 双 Tab、Room 本
 - 4 份 SQL 迁移已应用到 VPS 自托管 Supabase，并通过了 Auth 注册/登录、MCP 会话初始化、路线图读取和幂等学习记录的内部端到端测试。
 - Android APK 已在 Pixel 4 XL Android 13 上安装启动，在线门禁和远程 MCP Key 配置页已纳入。
 - Supabase 和 MCP 现运行于 VPS 回环网络，并经 HTTPS 代理对外提供 8443。桌面 HTTPS 健康检查和端到端 Auth/MCP smoke test 通过。
-- Pixel 4 XL Android 13 登录仍失败在 Conscrypt TLS handshake 的 Connection reset，Auth 没有收到请求，问题尚未解决。
+- 2026-11-25：Pixel 4 XL 真机注册、登录和完整云同步已验证通过。原 Conscrypt 登录 Connection reset 已定位为公网路径对特定 TLS ClientHello 的选择性 RST，Android 网络层已切换到嵌入式 Cronet（Chromium 500.x，与 Chrome 同代 TLS 指纹）；同时 VPS 证书已重签为 RSA/ISRG Root X1 链（原 ECDSA/X2 链不被嵌入式 Cronet 信任，且 Android 13 系统根仓无 ISRG Root X2）。
 - Android Realtime 与离线冲突选择界面尚未实现。阶段、月度、任务和单科计时提醒已接入本地通知调度。

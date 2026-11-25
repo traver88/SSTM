@@ -13,6 +13,10 @@ mcp.url=https://mcp.iizjj.asia:8443/mcp
 
 只把 anon key 放入客户端构建配置。Supabase Auth 的 RLS 策略负责限制用户数据访问，service-role key 不能放在 Android 工程。
 
+## 网络传输层
+
+客户端全部 Supabase HTTP 请求通过嵌入式 Cronet（`org.chromium.net:cronet-embedded:500.1.0`，Chromium 500.x，见 `data/CronetHttpClient.kt`）发送，不使用平台 Conscrypt 的 `HttpURLConnection`。原因：2026-11 验证发现部分公网路径会对非当前主流 TLS ClientHello 指纹（Conscrypt、旧版 Cronet、Windows SChannel）注入 TCP RST，而与 Chrome 同代的 Cronet 可正常握手。VPS 证书链必须是 RSA/ISRG Root X1（Android 13 系统根仓和 Chromium 内置信任库均原生信任 X1；ECDSA 的 ISRG Root X2 链会被嵌入式 Cronet 拒绝）。超时默认 20 秒，超时异常信息中会附带 Cronet 请求阶段探针结果便于排查。
+
 ## 首次运行
 
 1. VPS 自托管配置启用邮箱密码登录，首版使用自动邮箱确认以适配无外部 SMTP 的安装。
