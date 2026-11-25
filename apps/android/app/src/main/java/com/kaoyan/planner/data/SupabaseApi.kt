@@ -11,7 +11,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -28,6 +27,7 @@ data class SupabaseSession(
 class SupabaseApi(context: Context) {
     private val appContext = context.applicationContext
     private val sessionStore = SecureSessionStore(appContext)
+    private val httpClient = CronetHttpClient(appContext)
     private var session: SupabaseSession? = sessionStore.read()
 
     val isConfigured: Boolean
@@ -137,26 +137,19 @@ class SupabaseApi(context: Context) {
         prefer: String?,
     ): Pair<Int, String> {
         val baseUrl = BuildConfig.SUPABASE_URL.trimEnd('/')
-        val connection = (URL("$baseUrl$path").openConnection() as HttpURLConnection).apply {
-            requestMethod = method
-            connectTimeout = 15_000
-            readTimeout = 20_000
-            setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
-            setRequestProperty("Accept", "application/json")
-            setRequestProperty("Content-Type", "application/json")
-            bearerToken?.let { setRequestProperty("Authorization", "Bearer $it") }
-            prefer?.let { setRequestProperty("Prefer", it) }
-            if (body != null) doOutput = true
+        val headers = buildMap {
+            put("apikey", BuildConfig.SUPABASE_ANON_KEY)
+            put("Accept", "application/json")
+            put("Content-Type", "application/json")
+            bearerToken?.let { put("Authorization", "Bearer $it") }
+            prefer?.let { put("Prefer", it) }
         }
-        try {
-            if (body != null) connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body) }
-            val status = connection.responseCode
-            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-            val response = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-            return status to response
-        } finally {
-            connection.disconnect()
-        }
+        return httpClient.execute(
+            url = "$baseUrl$path",
+            method = method,
+            headers = headers,
+            body = body?.toByteArray(Charsets.UTF_8),
+        )
     }
 
     private fun checkResponse(response: Pair<Int, String>): String {

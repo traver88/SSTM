@@ -79,5 +79,10 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
+    // 设备对 8443 的 ClientHello 在公网路径上被基于内容的精确 RST 阻断，只有与当前
+    // Chrome 同代的 TLS 指纹（含 post-quantum 密钥交换）可通过。故使用最新版嵌入式
+    // Cronet（Chromium 500.x，与 Chrome 同代）作为统一 HTTP 栈。
+    implementation("org.chromium.net:cronet-embedded:500.1.0")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
